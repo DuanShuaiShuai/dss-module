@@ -1,0 +1,5 @@
+*.log
+*.temp
+/webpackDemo/node_modules
+/node_modules
+/dist
