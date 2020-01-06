@@ -1,5 +1,3 @@
-// dataService.js文件 
-// 定义没有依赖的模块
 define(function() {
     let msg = 'www.baidu.com'
     function getMsg() {

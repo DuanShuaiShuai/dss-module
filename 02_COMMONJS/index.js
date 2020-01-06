@@ -12,7 +12,6 @@
 // require('./4')
 //  var obj  =require('./3')
 // console.log(module)
-
 // 代码5
 require('./5')
 console.log(require.resolve('./index.js'))

@@ -1,6 +1,29 @@
-# JS模块化
+# 前言 
 
-## 命名空间
+随着前端技术的层出不穷 前端项目代码日益膨胀  Js的开发者随着也会考虑使用模块化规范来管理 下面将从前端的模块化发展历程依次讲解一些流行的模块化规范 
+
+## 全局function
+- 将不同的功能分装成不同的全局函数
+- 问题: 
+    - 污染全局命名空间(冲突)  
+    - 加载顺序  
+    - 看不出各个模块之间的关系 
+    - 外部直接可以访问(不安全)
+```javascript
+function a1(){
+  //...
+}
+function a2(){
+  //...
+}
+```
+## 命名空间-namespace
+- 简单的对象的封装  减少全局变量 解决了命名冲突（webpack2）
+- 问题：
+    - 多人协作 容易被覆盖（全局） 提前约定商量好
+    - 必须点点(记住路径名)  
+    - 暴露所有模块成员 外部直接可以访问(不安全)
+    - 加载顺序
 
 库名.类名.方法名
 ```javascript
@@ -9,16 +32,45 @@ var NameSpace = { }
  NameSpace.type.method= function(){
  }
 ```
-弊端：1.容易被覆盖 全局  2 必须点点 路径名 3 多人协作 商量使用哪种  约定 webpack2使用的就是这种 
+弊端：1. 2  3     
 
-## YUI
+## IIFE模式-闭包
+
+- 利用闭包来封装 数据是私有的 外部只能通过暴露的方法操作
+- 将数据和行为封装到一个函数内部, 通过给window添加属性来向外暴露接口
+- 通过传参将依赖引入（这也就成就了js现在模块化的基石）
+- 问题：
+    - 需要指定依赖顺序
 
 ```javascrit
-   YUI 沙箱机制
+ <!-- example02 -->
+<script type="text/javascript" src="./js/libs/jquery-3.4.1.js"></script>
+<script type="text/javascript" src="./js/module2.js"></script>
 ```
+
+### 比较有名的库 - YUI（Yahoo）
+
+```javascrit
+   //YUI 沙箱机制
+    <script src="http://yui.yahooapis.com/3.18.1/build/yui/yui-min.js"></script>
+    <script src="/module1.js"></script>
+    <script src="/module2.js"></script>
+    <script src="/a.js"></script>
+
+```
+
+### 随之而来的问题（多个script引入）
+- 请求过多
+    - 浏览器对并发是有限制的
+- 依赖模糊
+    - 不了解或者不看库的api 很难确定他们的依赖关系 也就导致页面的加载顺序报错
+- 难以维护
+    - 以上两问题造就了项目大了 难以维护  牵一发而动全身
+
 ## COMMONJS  后端
-http://nodejs.cn/api/modules.html#modules_the_module_wrapper
-url：http://wiki.commonjs.org/wiki/Modules/1.1.1
+随着在服务端[NODE](http://nodejs.cn/api/modules.html#modules_the_module_wrapper)的兴起，模块化进一步发展
+
+url：
 modules/1.1.1
     一个文件为一个模块
     通过module.exports 暴漏模块接口
@@ -64,6 +116,8 @@ require{
 ```javascript
     //代码1
     //export是对于 module.exports 的更简短的引用形式
+    // let export=module.exports
+
    // 何时使用export/module.export
     //http://nodejs.cn/api/modules.html#modules_exports_shortcut
     //区别：
@@ -80,12 +134,10 @@ require{
         })(module, module.exports);
         return module.exports;
     }
-
     //反例：
     module.exports.hello = true; // 从模块的引用中导出。
     exports = { hello: false };  // 不导出，仅在模块中可用。
 ```
-
 - module
   不是全局对象  而是每个模块本地的
 - module.children
@@ -95,7 +147,7 @@ require{
    //代码2
    module.exports // 的赋值必须立即完成
    //代码3
-   module.exports // 导出的是对象 引用  不是copy 
+   module.exports // 导出的是对象引用  不是copy 
 ```
 - module 属性
 ```javascript
@@ -114,11 +166,129 @@ require{
    //删除键值对将会导致下一次 require 重新加载被删除的模块
    require.main  //启动时加载的入口脚本
    require.resolve //   需要解析的模块路径。
-
   // import { createRequire } from 'module'; 就是require
   // const require = createRequire(import.meta.url);
+```
+# AMD - Async Module Definition
+- 前端的模块化
+- 使用define 定义模块
+- 使用require 加载模块
+- 比较有名的库  就是RequireJs
+- 依赖前置 提前执行
+- 缺点 ：开发者必须显式得指明依赖——这会使得开发工作量变大 比如：当你写到函数体内部几百上千行的时候，忽然发现需要增加一个依赖，你不得不回到函数顶端来将这个依赖添加进数组
+
+AMD 优先照顾浏览器的模块加载场景，使用了异步加载和回调的方式。
+异步模块定义（AMD）API指定了一种定义模块的机制，以便可以异步加载模块及其依赖项。这特别适用于浏览器环境，其中模块的同步加载会导致性能，可用性，调试和跨域访问问题。
+
+## 客户端与服务端执行的区别
+CommonJS规范加载模块是同步的，也就是说，只有加载完成，才能执行后面的操作。AMD规范则是非同步加载模块，允许指定回调函数。由于Node.js主要用于服务器编程，模块文件一般都已经存在于本地硬盘，所以加载起来比较快，不用考虑非同步加载的方式，所以CommonJS规范比较适用。但是，如果是浏览器环境，要从服务器端加载模块，这时就必须采用非同步模式，因此浏览器端一般采用AMD规范。
+
+### 比较有名的库 - RequireJS
+- RequireJS的基本思想是，通过define方法，将代码定义为模块；通过require方法，实现代码的模块加载。
+- 不会污染全局环境，能够清楚地显示依赖关系。
+- AMD模式可以用于浏览器环境，并且允许非同步加载模块，也可以根据需要动态加载模块。
+
+```javascript
+define(id?, dependencies?, factory);
+require(['alerter'], function(alerter) {
+    alerter.showMsg()
+})
+```
+ 
+# CMD - Common Module Definition 
+- 一个文件为一个模块
+- 使用define 定义模块 使用require 加载模块
+- 比较有名的库  就是SeaJS
+- 尽可能懒执行  和 AMD 不一样的地方(前置)
+CMD规范专门用于浏览器端，模块的加载是异步的，模块使用时才会加载执行。CMD规范整合了CommonJS和AMD规范的特点
+amd与cmd的区别 https://blog.csdn.net/u013782762/article/details/51882388
+```javascript
+    <script type="text/javascript" src="js/libs/sea.js"></script>
+    <script type="text/javascript" >
+        seajs.use('./js/modules/main')
+    </script>
+```
+# UMD - Universal Module Definition
+
+通用解决方案
+
+- UMD提供了支持多种风格的“通用”模式，在兼容CommonJS和AMD规范的同时，还兼容全局引用的方式
+- AMD模块以浏览器第一的原则发展，异步加载模块。
+- CommonJS模块以服务器第一原则发展，选择同步加载，这迫使人们又想出另一个更通用的模式UMD （Universal Module Definition）。希望解决跨平台的解决方案。
+- UMD先判断是否支持Node.js的模块（exports）是否存在，存在则使用Node.js模块模式。
+在判断是否支持AMD（define是否存在），存在则使用AMD方式加载模块。 //slick-carousel
+```javascript
+;(function() {
+    var runInContext = (function runInContext(context) {
+      function lodash(){
+        //  ...
+      }
+      //...
+          // Add chain sequence methods to the `lodash` wrapper.
+      lodash.prototype.at = wrapperAt;
+      lodash.prototype.chain = wrapperChain;
+      lodash.prototype.commit = wrapperCommit;
+      lodash.prototype.next = wrapperNext;
+      lodash.prototype.plant = wrapperPlant;
+      lodash.prototype.reverse = wrapperReverse;
+      lodash.prototype.toJSON = lodash.prototype.valueOf = lodash.prototype.value = wrapperValue;
+  
+      // Add lazy aliases.
+      lodash.prototype.first = lodash.prototype.head;
+  
+      if (symIterator) {
+        lodash.prototype[symIterator] = wrapperToIterator;
+      }
+      return lodash;
+    });
+  
+    /*--------------------------------------------------------------------------*/
+  
+    // Export lodash.
+    var _ = runInContext();
+  
+    // Some AMD build optimizers, like r.js, check for condition patterns like:
+    if (typeof define == 'function' && typeof define.amd == 'object' && define.amd) {
+      // Expose Lodash on the global object to prevent errors when Lodash is
+      // loaded by a script tag in the presence of an AMD loader.
+      // See http://requirejs.org/docs/errors.html#mismatch for more details.
+      // Use `_.noConflict` to remove Lodash from the global object.
+      root._ = _;
+  
+      // Define as an anonymous module so, through path mapping, it can be
+      // referenced as the "underscore" module.
+      define(function() {
+        return _;
+      });
+    }
+    // Check for `exports` after `define` in case a build optimizer adds it.
+    else if (freeModule) {
+      // Export for Node.js.
+      (freeModule.exports = _)._ = _;
+      // Export for CommonJS support.
+      freeExports._ = _;
+    }
+    else {
+      // Export to the global object.
+      root._ = _;
+    }
+  }.call(this));
+  
 
 ```
-## AMD/CMD/UMD 前端
 
 ## ES6 module
+
+在 ES6 之前，社区制定了一些模块加载方案，最主要的有 CommonJS 和 AMD 两种。前者用于服务器，后者用于浏览器。ES6 在语言标准的层面上，实现了模块功能，而且实现得相当简单，完全可以取代现有的 CommonJS 和 AMD 规范
+
+ES6 模块的设计思想，是尽量的静态化，使得编译时就能确定模块的依赖关系，以及输入和输出的变量。CommonJS 和 AMD 模块，都只能在运行时确定这些东西。比如，CommonJS 模块就是对象，输入时必须查找对象属性。
+```javascript
+// CommonJS模块
+let { stat, exists, readFile } = require('fs');
+// 等同于
+let _fs = require('fs');
+let stat = _fs.stat, exists = _fs.exists, readfile = _fs.readfile;
+```
+上面代码的实质是整体加载fs模块（即加载fs的所有方法），生成一个对象（_fs），然后再从这个对象上面读取3个方法。这种加载称为“运行时加载”，因为只有运行时才能得到这个对象，导致完全没办法在编译时做“静态优化”。
+
+

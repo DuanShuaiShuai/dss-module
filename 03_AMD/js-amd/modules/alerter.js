@@ -1,4 +1,3 @@
-//alerter.js文件
 // 定义有依赖的模块
 define(['dataService','jquery'], function(dataService,$) {
     let name = 'Tom'

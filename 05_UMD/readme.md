@@ -34,6 +34,6 @@ UMD先判断是否支持Node.js的模块（exports）是否存在，存在则使
 }));
 
 ```
-
-https://webpack.toobug.net/zh-cn/chapter2/umd.html
-https://webpack.toobug.net/zh-cn/chapter3/advanced-config.html
+参考链接：
+- https://webpack.toobug.net/zh-cn/chapter2/umd.html
+- https://webpack.toobug.net/zh-cn/chapter3/advanced-config.html

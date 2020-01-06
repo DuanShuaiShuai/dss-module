@@ -1,5 +1,7 @@
 *.log
 *.temp
 /webpackDemo/node_modules
+/05_UMD/node_modules
 /node_modules
 /dist
+/Blog

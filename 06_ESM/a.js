@@ -9,7 +9,7 @@
 
 
 setTimeout(()=>(
-    import(`./module.js`)
+  import(`./module.js`)
   .then(module => {
       console.log('module')
       console.log(module)

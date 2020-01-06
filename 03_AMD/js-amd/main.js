@@ -1,5 +1,5 @@
-// main.js文件
 (function() {
+  //使用前配置一下
     require.config({
       baseUrl: 'js-amd/', //基本路径 出发点在根目录下
       paths: {
