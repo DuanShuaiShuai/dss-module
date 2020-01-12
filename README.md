@@ -2,7 +2,7 @@
 
 随着前端技术的层出不穷 前端项目代码日益膨胀  Js的开发者随着也会考虑使用模块化规范来管理 下面将从前端的模块化发展历程依次讲解一些流行的模块化规范 
 
-## 全局function
+## 全局
 - 将不同的功能分装成不同的全局函数
 - 问题: 
     - 污染全局命名空间(冲突)  
@@ -43,7 +43,7 @@ var NameSpace = { }
     - 需要指定依赖顺序
 
 ```javascrit
- <!-- example02 -->
+<!-- example02 -->
 <script type="text/javascript" src="./js/libs/jquery-3.4.1.js"></script>
 <script type="text/javascript" src="./js/module2.js"></script>
 ```
@@ -279,16 +279,129 @@ amd与cmd的区别 https://blog.csdn.net/u013782762/article/details/51882388
 
 ## ES6 module
 
+模块功能主要由两个命令构成：export和import。export命令用于规定模块的对外接口，import命令用于输入其他模块提供的功能。
+
+``` javascript
+//写法一    
+export var firstName = 'Michael';
+export var lastName = 'Jackson';
+export var year = 1958;
+export function add(num0,num1){ 
+    return num0+num1
+}
+
+var firstName = 'Michael';
+var lastName = 'Jackson';
+var year = 1958;
+
+export {firstName, lastName, year};
+export {
+  firstName as v1,
+  lastName as v2,
+  year as v3
+};
+//对应的导入
+import { year, lastName } from '...'
+// 整体导入
+import * as utils from '...'
+import  utils from '...'  //报错
+// 1.弊端 用户需要知道所要加载的变量名或函数名 看api 为了给用户提供方便，让他们不用阅读文档就能加载模块  export default 
+//写法二
+export default function () {
+  console.log('foo');
+}
+
+export default function foo() { //视同匿名函数加载
+  console.log('foo');
+}
+
+import utils from '......';
+utils();
+
+//区别：第一组是不使用export default时，对应的import语句需要使用大括号；第二组是使用export default时，对应的import语句不需要使用大括号 本质上，export default就是输出一个叫做default的字段，然后系统允许你为它取任意名字。所以，下面的写法是有效的。如下
+
+function add(x, y) {
+  return x * y;
+}
+export {add as default}; // 等同于// export default add;
+
+import { default as xxx } from 'modules'; // 等同于 import xxx from 'modules';
+
+//两种写法不冲突  但是export default 只能一次
+export {firstName, lastName, year};
+export default function foo() { //视同匿名函数加载
+  console.log('foo');
+}
+import foo, { firstName, lastName, year } from '...';
+//更多了解http://caibaojian.com/es6/module.html
+
+```
+
+## import()
+上面的所讲的 import语句会被JavaScript引擎静态（编译期间）执行,所以下面代码报错（不是执行错误）
+
+```javascript
+  // 报错
+if (x === 2) {
+  import MyModual from './myModual';
+}
+
+```
+这样的设计，固然有利于编译器提高效率，但也导致无法在运行时加载模块。从长远来看，import语句会取代 Node 的require方法，但是require是运行时加载模块，import语句显然无法取代这种动态加载功能。
+因此，有一个[提案](https://github.com/tc39/proposal-dynamic-import),实现动态加载
+```
+import(`......js`)
+  .then(module => {
+    ....
+  })
+  .catch(err => {
+    ....
+  });
+
+//import()函数可以用在任何地方，不仅仅是模块，非模块的脚本也可以使用。它是运行时执行，也就是说，什么时候运行到这一句，也会加载指定的模块。另外，import()函数与所加载的模块没有静态连接关系，这点也是与import语句不相同。
+```
 在 ES6 之前，社区制定了一些模块加载方案，最主要的有 CommonJS 和 AMD 两种。前者用于服务器，后者用于浏览器。ES6 在语言标准的层面上，实现了模块功能，而且实现得相当简单，完全可以取代现有的 CommonJS 和 AMD 规范
 
 ES6 模块的设计思想，是尽量的静态化，使得编译时就能确定模块的依赖关系，以及输入和输出的变量。CommonJS 和 AMD 模块，都只能在运行时确定这些东西。比如，CommonJS 模块就是对象，输入时必须查找对象属性。
-```javascript
-// CommonJS模块
-let { stat, exists, readFile } = require('fs');
-// 等同于
-let _fs = require('fs');
-let stat = _fs.stat, exists = _fs.exists, readfile = _fs.readfile;
-```
-上面代码的实质是整体加载fs模块（即加载fs的所有方法），生成一个对象（_fs），然后再从这个对象上面读取3个方法。这种加载称为“运行时加载”，因为只有运行时才能得到这个对象，导致完全没办法在编译时做“静态优化”。
 
+
+### PC-WEB  
+
+### 分析一下打包后的代码
+#### commonjs commonjs
+#### es6 es6
+#### es6 commonjs  plugin-transform-modules-commonjs (以commonjs的方式导出)
+#### commonjs es6   
+
+```javascript
+Object.defineProperty(exports, "__esModule", {  value: true});
+exports["default"] = void 0;
+function addDefalut(num0, num1) {  return num0 + num1 + num1;}
+var _default = {  addDefalut: addDefalut};exports["default"] = _default;
+//---------------------------------------------------------------
+
+Object.defineProperty(exports, "__esModule", {  value: true});
+exports["default"] = void 0;
+function addDefalut(num0, num1) {  return num0 + num1 + num1;}
+var _default = {  addDefalut: addDefalut};exports["default"] = _default;
+module.exports = exports.default;
+```
+
+### imports-loader  分析一下；lodash打包方式
+```javascript
+var define = false;
+```
+
+
+### import 按需加载
+```javascript
+  //webpackDemo/src/demo1.js
+  setTimeout(()=>{
+      console.log('------------------')
+      import('./demo1/cancelApply.js').then(data=>{
+          console.log(data.cancelApply())
+      })
+  },2000)
+  //打包后的代码分析
+``` 
 
