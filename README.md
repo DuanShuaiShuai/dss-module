@@ -36,11 +36,13 @@ var NameSpace = { }
 
 ## IIFE模式-闭包
 
+- 内部函数总是可以访问其所在的外部函数中声明的参数和变量
 - 利用闭包来封装 数据是私有的 外部只能通过暴露的方法操作
 - 将数据和行为封装到一个函数内部, 通过给window添加属性来向外暴露接口
 - 通过传参将依赖引入（这也就成就了js现在模块化的基石）
 - 问题：
     - 需要指定依赖顺序
+    - 对代码有一定的了解
 
 ```javascrit
 <!-- example02 -->
@@ -72,21 +74,32 @@ var NameSpace = { }
 
 url：
 modules/1.1.1
-    一个文件为一个模块
-    通过module.exports 暴漏模块接口
-    通过require引入模块 文件内通过require对象引入指定模块
-    所有文件加载均是同步完成
-    原生Module对象，每个文件都是一个Module实例
-    通过module关键字暴露内容
-    每个模块加载一次之后就会被缓存
-    模块编译本质上是沙箱编译
-    由于使用了Node的api，只能在服务端环境上运行
+   - 一个文件为一个模块
+   - 通过module.exports 暴漏模块接口
+   - 通过require引入模块 文件内通过require对象引入指定模块
+   - 所有文件加载均是同步完成
+   - 原生Module对象，每个文件都是一个Module实例
+   - 通过module关键字暴露内容
+   - 每个模块加载一次之后就会被缓存
+   - 模块编译本质上是沙箱编译
+   - 由于使用了Node的api，只能在服务端环境上运行
 require{
    extensions:指示要求如何处理某些文件扩展名的对应的方法 ,
    main：模块对象，表示Node.js进程启动时加载的入口脚本对象，
    cache：缓存,
    resolve:解析路径 
 }
+
+- 模块封装器
+```javascrit
+    //IIFE
+   (function(exports, require, module, __filename, __dirname){
+    // 模块的代码实际上在这里
+    });
+   优点
+    1. 保持了顶层的变量 
+    2. 有助于提供一些看似全局的但实际上是模块特定的变量 exports, require, module, __filename, __dirname
+```
 - require.main === module  
 ```javascrit
     require.main === module
@@ -101,24 +114,12 @@ require{
    ./ ../  相对路径
    其他  核心模块(优先)或加载自 node_modules 
 ```
-- 模块封装器
-```javascrit
-    //IIFE
-   (function(exports, require, module, __filename, __dirname){
-    // 模块的代码实际上在这里
-    });
-   优点
-    1. 保持了顶层的变量 
-    2. 有助于提供一些看似全局的但实际上是模块特定的变量 exports, require, module, __filename, __dirname
-```
-- export 与 module.export 
+- 何时使用export/module.export
 
 ```javascript
     //代码1
     //export是对于 module.exports 的更简短的引用形式
     // let export=module.exports
-
-   // 何时使用export/module.export
     //http://nodejs.cn/api/modules.html#modules_exports_shortcut
     //区别：
     function require(/* ... */) {
@@ -145,8 +146,8 @@ require{
 - module.exports
 ```javascript
    //代码2
-   module.exports // 的赋值必须立即完成
-   //代码3
+   module.exports // 的赋值必须立即完成 值传递
+    //代码3
    module.exports // 导出的是对象引用  不是copy 
 ```
 - module 属性
@@ -183,7 +184,7 @@ AMD 优先照顾浏览器的模块加载场景，使用了异步加载和回调�
 ## 客户端与服务端执行的区别
 CommonJS规范加载模块是同步的，也就是说，只有加载完成，才能执行后面的操作。AMD规范则是非同步加载模块，允许指定回调函数。由于Node.js主要用于服务器编程，模块文件一般都已经存在于本地硬盘，所以加载起来比较快，不用考虑非同步加载的方式，所以CommonJS规范比较适用。但是，如果是浏览器环境，要从服务器端加载模块，这时就必须采用非同步模式，因此浏览器端一般采用AMD规范。
 
-### 比较有名的库 - RequireJS
+### 比较有名的库 - RequireJS（Demo）
 - RequireJS的基本思想是，通过define方法，将代码定义为模块；通过require方法，实现代码的模块加载。
 - 不会污染全局环境，能够清楚地显示依赖关系。
 - AMD模式可以用于浏览器环境，并且允许非同步加载模块，也可以根据需要动态加载模块。
@@ -195,7 +196,7 @@ require(['alerter'], function(alerter) {
 })
 ```
  
-# CMD - Common Module Definition 
+# CMD - Common Module Definition （Demo）
 - 一个文件为一个模块
 - 使用define 定义模块 使用require 加载模块
 - 比较有名的库  就是SeaJS
@@ -337,7 +338,7 @@ import foo, { firstName, lastName, year } from '...';
 
 ```
 
-## import()
+## import
 上面的所讲的 import语句会被JavaScript引擎静态（编译期间）执行,所以下面代码报错（不是执行错误）
 
 ```javascript
@@ -347,9 +348,11 @@ if (x === 2) {
 }
 
 ```
+## import() - 打包后的代码分析(其实就是一个Promise)
+
 这样的设计，固然有利于编译器提高效率，但也导致无法在运行时加载模块。从长远来看，import语句会取代 Node 的require方法，但是require是运行时加载模块，import语句显然无法取代这种动态加载功能。
 因此，有一个[提案](https://github.com/tc39/proposal-dynamic-import),实现动态加载
-```
+```javascript
 import(`......js`)
   .then(module => {
     ....
@@ -357,17 +360,24 @@ import(`......js`)
   .catch(err => {
     ....
   });
+    //webpackDemo/src/demo1.js
+  setTimeout(()=>{
+      console.log('------------------')
+      import('./demo1/cancelApply.js').then(data=>{
+          console.log(data.cancelApply())
+      })
+  },2000)
+  //打包后的代码分析
+```
 
 //import()函数可以用在任何地方，不仅仅是模块，非模块的脚本也可以使用。它是运行时执行，也就是说，什么时候运行到这一句，也会加载指定的模块。另外，import()函数与所加载的模块没有静态连接关系，这点也是与import语句不相同。
-```
+
 在 ES6 之前，社区制定了一些模块加载方案，最主要的有 CommonJS 和 AMD 两种。前者用于服务器，后者用于浏览器。ES6 在语言标准的层面上，实现了模块功能，而且实现得相当简单，完全可以取代现有的 CommonJS 和 AMD 规范
 
 ES6 模块的设计思想，是尽量的静态化，使得编译时就能确定模块的依赖关系，以及输入和输出的变量。CommonJS 和 AMD 模块，都只能在运行时确定这些东西。比如，CommonJS 模块就是对象，输入时必须查找对象属性。
 
 
-### PC-WEB  
-
-### 分析一下打包后的代码
+## PC-WEB---分析对比一下打包后的代码（webpackDemo）
 #### commonjs commonjs
 #### es6 es6
 #### es6 commonjs  plugin-transform-modules-commonjs (以commonjs的方式导出)
@@ -389,19 +399,7 @@ module.exports = exports.default;
 
 ### imports-loader  分析一下；lodash打包方式
 ```javascript
-var define = false;
+var define = false; //禁止使用amd规范
+
 ```
-
-
-### import 按需加载
-```javascript
-  //webpackDemo/src/demo1.js
-  setTimeout(()=>{
-      console.log('------------------')
-      import('./demo1/cancelApply.js').then(data=>{
-          console.log(data.cancelApply())
-      })
-  },2000)
-  //打包后的代码分析
-``` 
 
