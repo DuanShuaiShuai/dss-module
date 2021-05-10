@@ -11,7 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "live-server": "^1.2.1",
-    "lodash": "^4.17.15"
+    "lodash": "^4.17.21"
   },
   "browserslist": "> 0.25%, not dead"
 }
